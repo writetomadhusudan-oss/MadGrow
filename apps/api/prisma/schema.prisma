@@ -1,0 +1,47 @@
+// SQLite for zero-setup local development. To move to PostgreSQL:
+// change provider to "postgresql", point DATABASE_URL at the server,
+// and re-run `prisma migrate dev`.
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+model User {
+  id           String          @id @default(cuid())
+  email        String          @unique
+  passwordHash String
+  name         String?
+  createdAt    DateTime        @default(now())
+  watchlist    WatchlistItem[]
+  transactions Transaction[]
+}
+
+model WatchlistItem {
+  id      String   @id @default(cuid())
+  userId  String
+  user    User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  symbol  String
+  name    String?
+  addedAt DateTime @default(now())
+
+  @@unique([userId, symbol])
+}
+
+model Transaction {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  symbol    String
+  name      String?
+  type      String // "BUY" | "SELL" (SQLite has no enums)
+  quantity  Float
+  price     Float
+  date      DateTime
+  createdAt DateTime @default(now())
+
+  @@index([userId, symbol])
+}
