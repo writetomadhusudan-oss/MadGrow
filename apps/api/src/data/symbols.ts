@@ -28,4 +28,6 @@ export const INDICES = [
   { symbol: "^BSESN", name: "SENSEX" },
   { symbol: "^NSEI", name: "NIFTY 50" },
   { symbol: "^NSEBANK", name: "NIFTY BANK" },
+  { symbol: "NIFTY_FIN_SERVICE.NS", name: "FINNIFTY" },
+  { symbol: "^NSEMDCP50", name: "NIFTY MIDCAP 50" },
 ];
