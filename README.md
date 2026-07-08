@@ -1,9 +1,41 @@
 # MadGrow 🌱
 
-A stock investment web app for Indian markets (NSE/BSE) with live-ish pricing,
-market news, watchlists, and a portfolio with P&L tracking. Design inspired by
-the reference mockup in this repo (light lavender canvas, white rounded cards,
-indigo accent).
+A trading **learning platform** for Indian markets (NSE/BSE): live-ish pricing,
+market news, watchlists — and a full paper-trading simulator with virtual
+**MadCoins**, an AI trade assistant, and performance analytics. Design inspired
+by the reference mockup in this repo (light lavender canvas, white rounded
+cards, indigo accent).
+
+> **Educational use only.** All trading uses virtual MadCoins; no order can ever
+> reach a real broker. Signals are probability-based estimates, not advice.
+> Users must accept the statutory disclaimer on first use.
+
+## Trading simulator
+
+- **MadCoins wallet** — every account starts with 1,000,000 MC (configurable via
+  `TRADING_STARTING_BALANCE`). Tracks available balance, margin used by shorts,
+  unrealized/realized/today's/lifetime P&L.
+- **Paper engine** — market / limit / stop / stop-limit orders, modify & cancel,
+  longs and shorts, position-level stop-loss & target, evaluated every 60s
+  against delayed quotes. Simulates adverse slippage plus configurable Indian
+  charges: brokerage, STT, exchange, SEBI, GST, stamp duty (`TRADING_*` env vars,
+  see [apps/api/src/config/trading.ts](apps/api/src/config/trading.ts)).
+- **AI Trade Assistant** — 8 toggleable strategies (EMA cross, SuperTrend, RSI
+  reversal, MACD, Bollinger/Donchian breakouts, VWAP, Stochastic) built on a
+  pure indicator library ([packages/shared/src/indicators.ts](packages/shared/src/indicators.ts)).
+  Each outputs signal, confidence, reasoning, ATR stop/target, risk-reward, and
+  a position-sizing hint. 🍏/🍎 markers on the chart show suggested entries and
+  exits; tap a bar for the reasoning. An LLM explanation provider can be plugged
+  in behind the same interface later (Feature-9 abstraction).
+- **Analytics** — win/loss ratio, profit factor, max drawdown, avg holding time,
+  best/worst trade, Sharpe estimate, equity curve, daily & monthly P&L.
+- **Alerts** — order fills/rejections, SL/target hits; in-app bell + browser
+  notifications (FCM/APNs can slot into the same alert rows for mobile later).
+- **Derivatives** — extended index board (SENSEX, NIFTY 50, BANK NIFTY,
+  FINNIFTY, MIDCAP 50) and an option-chain page with IV and locally computed
+  Black-Scholes Greeks. Yahoo's free feed has no NSE chains, so NSE derivatives
+  stay behind the `OptionChainProvider` abstraction until a licensed feed
+  (Kite Connect, TrueData) is plugged in; US symbols work today as a demo.
 
 ## Stack
 
@@ -55,6 +87,27 @@ GET  /market/indices /market/movers /market/news
 GET  /stocks/search?q=   /stocks/:symbol   /stocks/:symbol/history?range=   /stocks/:symbol/news
 GET/POST /watchlist      DELETE /watchlist/:symbol
 GET  /portfolio          GET/POST /portfolio/transactions   DELETE /portfolio/transactions/:id
+
+# Paper trading (auth required; virtual MadCoins only)
+GET  /trading/wallet                       wallet summary + positions + fee config
+POST /trading/orders                       { symbol, side, type, quantity, limitPrice?, stopPrice? }
+GET  /trading/orders?status=OPEN           order book
+PATCH/DELETE /trading/orders/:id           modify / cancel resting orders
+POST /trading/positions/protection         set { symbol, stopLoss?, target? }
+POST /trading/positions/:symbol/close      market-close a position
+GET  /trading/fees/preview?side&quantity&price
+GET  /trading/trades                       fill history with fees & realized P&L
+GET  /trading/analytics                    win ratio, profit factor, drawdown, equity curve…
+GET  /trading/leaderboard                  top realized P&L (masked identities)
+GET  /trading/alerts    POST /trading/alerts/read
+
+# Signals & derivatives
+GET  /signals/:symbol?range=6mo            per-strategy signals + 🍏/🍎 marker events
+GET  /derivatives/indices                  extended index board
+GET  /derivatives/options/:symbol          option chain + Greeks ({ supported:false } for NSE)
+
+# Disclaimer
+POST /auth/accept-disclaimer               records statutory-disclaimer acceptance
 ```
 
 ## Notes
