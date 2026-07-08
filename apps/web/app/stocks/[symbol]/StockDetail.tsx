@@ -1,15 +1,15 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import type { Candle, ChartRange, NewsItem, Quote } from "@market-cap/shared";
+import { Sparkles } from "lucide-react";
+import type { Candle, ChartRange, NewsItem, OrderSide, Quote } from "@market-cap/shared";
 import { api } from "@/lib/api";
 import {
   displaySymbol,
   formatINR,
   formatIndianCompact,
   formatNumber,
-  formatPercent,
   formatSigned,
 } from "@/lib/format";
 import { ChangeBadge } from "@/components/ChangeBadge";
@@ -17,6 +17,12 @@ import { NewsList } from "@/components/NewsList";
 import { PriceChart } from "@/components/PriceChart";
 import { StockAvatar } from "@/components/StockAvatar";
 import { WatchButton } from "@/components/WatchButton";
+import { TradeTicket } from "@/components/TradeTicket";
+import {
+  SignalsPanel,
+  type SignalMarkerData,
+  type StrategyCardData,
+} from "@/components/SignalsPanel";
 
 const RANGES: { value: ChartRange; label: string }[] = [
   { value: "1d", label: "1D" },
@@ -26,6 +32,14 @@ const RANGES: { value: ChartRange; label: string }[] = [
   { value: "1y", label: "1Y" },
   { value: "5y", label: "5Y" },
 ];
+
+interface SignalsResponse {
+  strategies: StrategyCardData[];
+  markers: SignalMarkerData[];
+}
+
+const STRATEGY_PREF_KEY = "madgrow.strategies.disabled";
+const MARKERS_PREF_KEY = "madgrow.markers.enabled";
 
 function Stat({ label, value }: { label: string; value: string }) {
   return (
@@ -38,6 +52,35 @@ function Stat({ label, value }: { label: string; value: string }) {
 
 export function StockDetail({ symbol }: { symbol: string }) {
   const [range, setRange] = useState<ChartRange>("1d");
+  const [ticket, setTicket] = useState<OrderSide | null>(null);
+  const [showSignals, setShowSignals] = useState(false);
+  const [disabledStrategies, setDisabledStrategies] = useState<Set<string>>(new Set());
+  const [selectedTime, setSelectedTime] = useState<string | null>(null);
+
+  useEffect(() => {
+    try {
+      setShowSignals(localStorage.getItem(MARKERS_PREF_KEY) === "1");
+      setDisabledStrategies(
+        new Set(JSON.parse(localStorage.getItem(STRATEGY_PREF_KEY) ?? "[]") as string[])
+      );
+    } catch {
+      // first visit
+    }
+  }, []);
+
+  const toggleSignals = (on: boolean) => {
+    setShowSignals(on);
+    localStorage.setItem(MARKERS_PREF_KEY, on ? "1" : "0");
+  };
+  const toggleStrategy = (id: string) => {
+    setDisabledStrategies((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      localStorage.setItem(STRATEGY_PREF_KEY, JSON.stringify([...next]));
+      return next;
+    });
+  };
 
   const { data: quote, error } = useQuery({
     queryKey: ["quote", symbol],
@@ -53,6 +96,30 @@ export function StockDetail({ symbol }: { symbol: string }) {
     queryFn: () => api<NewsItem[]>(`/stocks/${encodeURIComponent(symbol)}/news`),
     refetchInterval: 10 * 60_000,
   });
+  const { data: signals } = useQuery({
+    queryKey: ["signals", symbol, range],
+    queryFn: () =>
+      api<SignalsResponse>(`/signals/${encodeURIComponent(symbol)}?range=${range}`),
+    enabled: showSignals,
+    refetchInterval: 5 * 60_000,
+  });
+
+  const enabledStrategies = useMemo(
+    () =>
+      new Set(
+        (signals?.strategies ?? [])
+          .map((s) => s.id)
+          .filter((id) => !disabledStrategies.has(id))
+      ),
+    [signals, disabledStrategies]
+  );
+  const activeMarkers = useMemo(
+    () =>
+      showSignals
+        ? (signals?.markers ?? []).filter((m) => enabledStrategies.has(m.strategyId))
+        : [],
+    [showSignals, signals, enabledStrategies]
+  );
 
   if (error) {
     return (
@@ -91,12 +158,15 @@ export function StockDetail({ symbol }: { symbol: string }) {
           <WatchButton symbol={symbol} name={quote?.name} />
         </div>
 
-        {/* Range tabs */}
-        <div className="mt-6 flex flex-wrap gap-2">
+        {/* Range tabs + AI toggle */}
+        <div className="mt-6 flex flex-wrap items-center gap-2">
           {RANGES.map((r) => (
             <button
               key={r.value}
-              onClick={() => setRange(r.value)}
+              onClick={() => {
+                setRange(r.value);
+                setSelectedTime(null);
+              }}
               className={`rounded-full px-4 py-1.5 text-xs font-semibold transition ${
                 range === r.value
                   ? "bg-ink text-white shadow-card"
@@ -106,13 +176,29 @@ export function StockDetail({ symbol }: { symbol: string }) {
               {r.label}
             </button>
           ))}
+          <button
+            onClick={() => toggleSignals(!showSignals)}
+            className={`ml-auto flex items-center gap-1.5 rounded-full px-4 py-1.5 text-xs font-bold transition ${
+              showSignals
+                ? "bg-gradient-to-r from-accent to-accent-deep text-white shadow-pop"
+                : "border border-line bg-card text-soft hover:border-accent hover:text-accent-deep"
+            }`}
+            title="Toggle AI entry/exit markers"
+          >
+            <Sparkles size={13} /> AI Signals
+          </button>
         </div>
 
-        {/* Chart */}
+        {/* Chart with 🍏/🍎 markers */}
         <div className="mt-4">
           {candles ? (
             candles.length > 0 ? (
-              <PriceChart candles={candles} range={range} />
+              <PriceChart
+                candles={candles}
+                range={range}
+                markers={activeMarkers}
+                onSelectTime={setSelectedTime}
+              />
             ) : (
               <p className="py-16 text-center text-sm text-soft">
                 No chart data for this range
@@ -123,6 +209,49 @@ export function StockDetail({ symbol }: { symbol: string }) {
           )}
         </div>
       </section>
+
+      {/* Paper trade with MadCoins */}
+      <section className="flex gap-3">
+        <button
+          onClick={() => setTicket("BUY")}
+          className="flex-1 rounded-full bg-gradient-to-r from-accent to-accent-deep py-3 text-center text-sm font-bold text-white shadow-pop transition hover:opacity-90"
+        >
+          Buy (paper)
+        </button>
+        <button
+          onClick={() => setTicket("SELL")}
+          className="flex-1 rounded-full border border-line bg-card py-3 text-center text-sm font-bold text-ink shadow-card transition hover:border-accent"
+        >
+          Sell / Short (paper)
+        </button>
+      </section>
+      {ticket && (
+        <TradeTicket
+          symbol={symbol}
+          name={quote?.name}
+          lastPrice={quote?.price ?? null}
+          side={ticket}
+          onClose={() => setTicket(null)}
+        />
+      )}
+
+      {/* AI strategy panel */}
+      {showSignals && (
+        <section className="rounded-card bg-card p-6 shadow-card">
+          <h2 className="mb-4 text-lg font-bold">AI Trade Assistant</h2>
+          {signals ? (
+            <SignalsPanel
+              strategies={signals.strategies}
+              markers={signals.markers}
+              enabled={enabledStrategies}
+              onToggle={toggleStrategy}
+              selectedTime={selectedTime}
+            />
+          ) : (
+            <div className="h-48 animate-pulse rounded-2xl bg-canvas" />
+          )}
+        </section>
+      )}
 
       {/* Stats */}
       <section className="rounded-card bg-card p-6 shadow-card">
@@ -151,22 +280,6 @@ export function StockDetail({ symbol }: { symbol: string }) {
             }
           />
         </div>
-      </section>
-
-      {/* Buy / Sell — wired to portfolio in the next milestone */}
-      <section className="flex gap-3">
-        <a
-          href={`/portfolio?symbol=${encodeURIComponent(symbol)}&action=BUY`}
-          className="flex-1 rounded-full bg-gradient-to-r from-accent to-accent-deep py-3 text-center text-sm font-bold text-white shadow-pop transition hover:opacity-90"
-        >
-          Buy
-        </a>
-        <a
-          href={`/portfolio?symbol=${encodeURIComponent(symbol)}&action=SELL`}
-          className="flex-1 rounded-full border border-line bg-card py-3 text-center text-sm font-bold text-ink shadow-card transition hover:border-accent"
-        >
-          Sell
-        </a>
       </section>
 
       {/* News */}

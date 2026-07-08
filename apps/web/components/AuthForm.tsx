@@ -106,6 +106,13 @@ export function AuthForm({ mode }: { mode: "login" | "register" }) {
           {mutation.isPending ? "Please wait…" : isLogin ? "Log in" : "Register"}
         </button>
 
+        <p className="rounded-2xl bg-canvas/60 p-3 text-[10px] leading-snug text-faint">
+          This application is provided solely for educational and trading practice purposes using
+          virtual currency (MadCoins). It does not facilitate trades involving real money or any
+          regulated financial instruments. Signals and analytics are educational estimates, not
+          financial advice.
+        </p>
+
         <p className="text-center text-sm text-soft">
           {isLogin ? (
             <>

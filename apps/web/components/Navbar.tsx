@@ -4,9 +4,13 @@ import Link from "next/link";
 import { LogOut, Sprout } from "lucide-react";
 import { useLogout, useUser } from "@/lib/auth";
 import { SearchBox } from "./SearchBox";
+import { AlertsBell } from "./AlertsBell";
 
 const links = [
   { href: "/", label: "Home" },
+  { href: "/trading", label: "Trading" },
+  { href: "/analytics", label: "Analytics" },
+  { href: "/options", label: "Options" },
   { href: "/news", label: "News" },
   { href: "/watchlist", label: "Watchlist" },
 ];
@@ -79,6 +83,7 @@ export function Navbar() {
           >
             Portfolio
           </Link>
+          <AlertsBell />
           <UserMenu />
         </div>
       </div>

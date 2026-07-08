@@ -2,11 +2,12 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Briefcase, Home, Newspaper, Star } from "lucide-react";
+import { Briefcase, CandlestickChart, Home, Star, TrendingUp } from "lucide-react";
 
 const items = [
   { href: "/", label: "Home", icon: Home },
-  { href: "/news", label: "News", icon: Newspaper },
+  { href: "/trading", label: "Trading", icon: CandlestickChart },
+  { href: "/analytics", label: "Analytics", icon: TrendingUp },
   { href: "/watchlist", label: "Watchlist", icon: Star },
   { href: "/portfolio", label: "Portfolio", icon: Briefcase },
 ];
