@@ -11,13 +11,19 @@ generator client {
 }
 
 model User {
-  id           String          @id @default(cuid())
-  email        String          @unique
-  passwordHash String
-  name         String?
-  createdAt    DateTime        @default(now())
-  watchlist    WatchlistItem[]
-  transactions Transaction[]
+  id                   String          @id @default(cuid())
+  email                String          @unique
+  passwordHash         String
+  name                 String?
+  disclaimerAcceptedAt DateTime?
+  createdAt            DateTime        @default(now())
+  watchlist            WatchlistItem[]
+  transactions         Transaction[]
+  wallet               Wallet?
+  paperOrders          PaperOrder[]
+  paperPositions       PaperPosition[]
+  paperTrades          PaperTrade[]
+  tradeAlerts          TradeAlert[]
 }
 
 model WatchlistItem {
@@ -29,6 +35,88 @@ model WatchlistItem {
   addedAt DateTime @default(now())
 
   @@unique([userId, symbol])
+}
+
+// ---------- MadCoins paper trading (virtual currency only) ----------
+
+model Wallet {
+  id          String   @id @default(cuid())
+  userId      String   @unique
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  balance     Float // available MadCoins (margin blocked by shorts is derived)
+  realizedPnl Float    @default(0) // lifetime realized P&L
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model PaperOrder {
+  id          String    @id @default(cuid())
+  userId      String
+  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  symbol      String
+  name        String?
+  side        String // BUY | SELL
+  type        String // MARKET | LIMIT | STOP | STOP_LIMIT
+  quantity    Float
+  limitPrice  Float?
+  stopPrice   Float?
+  status      String    @default("OPEN") // OPEN | FILLED | CANCELLED | REJECTED
+  filledPrice Float?
+  fees        Float?
+  note        String? // e.g. rejection reason, SL/target trigger source
+  filledAt    DateTime?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  @@index([userId, status])
+  @@index([status])
+}
+
+model PaperPosition {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  symbol    String
+  name      String?
+  quantity  Float // signed: negative = short
+  avgPrice  Float
+  stopLoss  Float?
+  target    Float?
+  openedAt  DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([userId, symbol])
+}
+
+model PaperTrade {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  orderId   String?
+  symbol    String
+  name      String?
+  side      String
+  quantity  Float
+  price     Float
+  fees      Float
+  pnl       Float? // realized P&L when this fill closed (part of) a position
+  holdingMs Float? // holding duration for closing fills
+  createdAt DateTime @default(now())
+
+  @@index([userId, createdAt])
+}
+
+model TradeAlert {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  type      String // ORDER_FILLED | STOP_LOSS_HIT | TARGET_HIT | ORDER_REJECTED | ...
+  symbol    String?
+  message   String
+  read      Boolean  @default(false)
+  createdAt DateTime @default(now())
+
+  @@index([userId, read])
 }
 
 model Transaction {

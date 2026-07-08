@@ -3,6 +3,7 @@ import bcrypt from "bcryptjs";
 import { z } from "zod";
 import { prisma } from "../db";
 import { requireAuth, signToken, TOKEN_COOKIE, type AuthedRequest } from "../middleware/auth";
+import { getOrCreateWallet } from "../services/engine";
 
 export const authRouter = Router();
 
@@ -32,8 +33,11 @@ authRouter.post("/register", async (req, res) => {
   const user = await prisma.user.create({
     data: { email, passwordHash: await bcrypt.hash(password, 10), name },
   });
+  await getOrCreateWallet(user.id); // grant starting MadCoins
   res.cookie(TOKEN_COOKIE, signToken(user.id), COOKIE_OPTS);
-  res.status(201).json({ id: user.id, email: user.email, name: user.name });
+  res
+    .status(201)
+    .json({ id: user.id, email: user.email, name: user.name, disclaimerAcceptedAt: null });
 });
 
 authRouter.post("/login", async (req, res) => {
@@ -58,5 +62,18 @@ authRouter.post("/logout", (_req, res) => {
 authRouter.get("/me", requireAuth, async (req: AuthedRequest, res) => {
   const user = await prisma.user.findUnique({ where: { id: req.userId! } });
   if (!user) return res.status(401).json({ error: "Not authenticated" });
-  res.json({ id: user.id, email: user.email, name: user.name });
+  res.json({
+    id: user.id,
+    email: user.email,
+    name: user.name,
+    disclaimerAcceptedAt: user.disclaimerAcceptedAt,
+  });
+});
+
+authRouter.post("/accept-disclaimer", requireAuth, async (req: AuthedRequest, res) => {
+  const user = await prisma.user.update({
+    where: { id: req.userId! },
+    data: { disclaimerAcceptedAt: new Date() },
+  });
+  res.json({ ok: true, disclaimerAcceptedAt: user.disclaimerAcceptedAt });
 });

@@ -8,6 +8,10 @@ import { marketRouter } from "./routes/market";
 import { stocksRouter } from "./routes/stocks";
 import { watchlistRouter } from "./routes/watchlist";
 import { portfolioRouter } from "./routes/portfolio";
+import { tradingRouter } from "./routes/trading";
+import { signalsRouter } from "./routes/signals";
+import { derivativesRouter } from "./routes/derivatives";
+import { startMonitor } from "./services/engine";
 
 const app = express();
 const PORT = Number(process.env.PORT ?? 4000);
@@ -32,6 +36,9 @@ app.use("/market", marketRouter);
 app.use("/stocks", stocksRouter);
 app.use("/watchlist", watchlistRouter);
 app.use("/portfolio", portfolioRouter);
+app.use("/trading", tradingRouter);
+app.use("/signals", signalsRouter);
+app.use("/derivatives", derivativesRouter);
 
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 app.use((err: Error, _req: express.Request, res: express.Response, _next: express.NextFunction) => {
@@ -43,5 +50,6 @@ app.use((err: Error, _req: express.Request, res: express.Response, _next: expres
 });
 
 app.listen(PORT, () => {
-  console.log(`Market Cap API listening on http://localhost:${PORT}`);
+  console.log(`MadGrow API listening on http://localhost:${PORT}`);
+  startMonitor(); // paper-trading order/SL/target evaluation loop
 });
