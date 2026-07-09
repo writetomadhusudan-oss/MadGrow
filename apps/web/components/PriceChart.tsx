@@ -63,8 +63,21 @@ export function PriceChart({
         horzLine: { labelBackgroundColor: "#6553f5" },
         vertLine: { labelBackgroundColor: "#6553f5" },
       },
-      handleScroll: false,
-      handleScale: false,
+      // Mobile-app-style navigation: drag to pan, pinch (trackpad pinch
+      // arrives as ctrl+wheel) or mouse wheel to zoom into finer structure.
+      handleScroll: {
+        pressedMouseMove: true,
+        horzTouchDrag: true,
+        vertTouchDrag: false,
+        mouseWheel: true,
+      },
+      handleScale: {
+        mouseWheel: true,
+        pinch: true,
+        axisPressedMouseMove: true,
+        axisDoubleClickReset: true,
+      },
+      kineticScroll: { touch: true, mouse: false },
     });
     chartRef.current = chart;
 
@@ -108,8 +121,8 @@ export function PriceChart({
 
     chart.timeScale().fitContent();
     const observer = new ResizeObserver(() => {
+      // Only track width — refitting here would wipe the user's pan/zoom.
       chart.applyOptions({ width: el.clientWidth });
-      chart.timeScale().fitContent();
     });
     observer.observe(el);
 
@@ -120,5 +133,19 @@ export function PriceChart({
     };
   }, [candles, range, height, markers]);
 
-  return <div ref={containerRef} className="w-full" style={{ height }} />;
+  return (
+    <div className="relative">
+      <div ref={containerRef} className="w-full" style={{ height }} />
+      <button
+        onClick={() => chartRef.current?.timeScale().fitContent()}
+        title="Reset zoom to fit all data"
+        className="absolute right-2 top-2 z-10 rounded-full border border-line bg-card/90 px-3 py-1 text-[11px] font-semibold text-soft shadow-card backdrop-blur transition hover:border-accent hover:text-accent-deep"
+      >
+        Fit
+      </button>
+      <p className="pointer-events-none absolute bottom-1 right-2 z-10 hidden text-[10px] text-faint sm:block">
+        drag to pan · pinch or scroll to zoom
+      </p>
+    </div>
+  );
 }
