@@ -24,9 +24,9 @@ cards, indigo accent).
   reversal, MACD, Bollinger/Donchian breakouts, VWAP, Stochastic) built on a
   pure indicator library ([packages/shared/src/indicators.ts](packages/shared/src/indicators.ts)).
   Each outputs signal, confidence, reasoning, ATR stop/target, risk-reward, and
-  a position-sizing hint. 🍏/🍎 markers on the chart show suggested entries and
-  exits; tap a bar for the reasoning. An LLM explanation provider can be plugged
-  in behind the same interface later (Feature-9 abstraction).
+  a position-sizing hint. Green/red dot markers on the chart show suggested
+  entries and exits; tap a bar for the reasoning. An LLM explanation provider
+  can be plugged in behind the same interface later (Feature-9 abstraction).
 - **Analytics** — win/loss ratio, profit factor, max drawdown, avg holding time,
   best/worst trade, Sharpe estimate, equity curve, daily & monthly P&L.
 - **Alerts** — order fills/rejections, SL/target hits; in-app bell + browser
@@ -102,7 +102,7 @@ GET  /trading/leaderboard                  top realized P&L (masked identities)
 GET  /trading/alerts    POST /trading/alerts/read
 
 # Signals & derivatives
-GET  /signals/:symbol?range=6mo            per-strategy signals + 🍏/🍎 marker events
+GET  /signals/:symbol?range=6mo            per-strategy signals + entry/exit marker events
 GET  /derivatives/indices                  extended index board
 GET  /derivatives/options/:symbol          option chain + Greeks ({ supported:false } for NSE)
 

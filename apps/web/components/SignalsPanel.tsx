@@ -60,7 +60,8 @@ export function SignalsPanel({
           {selected.map((m, i) => (
             <div key={i} className={i > 0 ? "mt-3 border-t border-line pt-3" : ""}>
               <p className="text-sm font-bold">
-                {m.kind === "entry" ? "🍏 Suggested Entry" : "🍎 Suggested Exit"}
+                <span className={m.kind === "entry" ? "text-gain" : "text-loss"}>●</span>{" "}
+                {m.kind === "entry" ? "Suggested Entry" : "Suggested Exit"}
                 <span className="ml-2 rounded-full bg-card px-2 py-0.5 text-xs font-semibold text-accent-deep">
                   Confidence: {m.confidence}% (estimate)
                 </span>
@@ -79,8 +80,9 @@ export function SignalsPanel({
         </div>
       ) : (
         <p className="rounded-2xl bg-canvas/60 px-4 py-3 text-xs text-soft">
-          🍏 = suggested entry · 🍎 = suggested exit. Tap a marker (or its bar) on the chart to
-          see the reasoning. Signals are probability-based educational estimates — never
+          <span className="text-gain">●</span> = suggested entry ·{" "}
+          <span className="text-loss">●</span> = suggested exit. Tap a marker (or its bar) on the
+          chart to see the reasoning. Signals are probability-based educational estimates — never
           guarantees.
         </p>
       )}

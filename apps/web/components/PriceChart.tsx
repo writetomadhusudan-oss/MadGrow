@@ -28,7 +28,7 @@ export function PriceChart({
   candles: Candle[];
   range: ChartRange;
   height?: number;
-  /** 🟢 entry / 🔴 exit markers (AI signals). */
+  /** Green (entry) / red (exit) dot markers (AI signals). */
   markers?: ChartMarker[];
   /** Fires with the ISO time of a clicked/tapped bar (used to explain markers). */
   onSelectTime?: (isoTime: string) => void;
@@ -94,8 +94,7 @@ export function PriceChart({
           position: m.kind === "entry" ? ("belowBar" as const) : ("aboveBar" as const),
           color: m.kind === "entry" ? "#0caf7d" : "#ef4056",
           shape: "circle" as const,
-          text: m.kind === "entry" ? "🍏" : "🍎",
-          size: 0.1,
+          size: 0.6, // small dot
         }));
       series.setMarkers(seriesMarkers);
     }
