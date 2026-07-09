@@ -1,5 +1,12 @@
 import YahooFinance from "yahoo-finance2";
-import type { Candle, ChartRange, IndexQuote, Quote, SearchResult } from "@market-cap/shared";
+import {
+  resampleCandles,
+  type Candle,
+  type ChartRange,
+  type IndexQuote,
+  type Quote,
+  type SearchResult,
+} from "@market-cap/shared";
 import { cached, TTL } from "../cache";
 import { INDICES, NIFTY_100 } from "../data/symbols";
 
@@ -63,8 +70,25 @@ function toQuote(q: YahooQuote): Quote {
   };
 }
 
-const RANGE_CONFIG: Record<ChartRange, { days: number; interval: "5m" | "15m" | "1d" | "1wk" }> = {
-  "1d": { days: 5, interval: "5m" }, // fetch a few days, then trim to the last session
+type YahooInterval = "1m" | "5m" | "15m" | "30m" | "60m" | "1d" | "1wk";
+
+interface RangeConfig {
+  days: number; // lookback window requested from Yahoo
+  interval: YahooInterval; // base interval fetched
+  group?: number; // resample factor (10m = 2×5m, 4h = 4×60m)
+  lastSessionOnly?: boolean; // trim to most recent trading day
+}
+
+// Yahoo free-tier limits: 1m history ≈ last 7 days; 5m–60m ≈ last 60 days
+// (60m stretches further). 10m and 4h aren't served natively — we resample.
+const RANGE_CONFIG: Record<ChartRange, RangeConfig> = {
+  "1m": { days: 4, interval: "1m", lastSessionOnly: true },
+  "5m": { days: 5, interval: "5m" },
+  "10m": { days: 10, interval: "5m", group: 2 },
+  "30m": { days: 30, interval: "30m" },
+  "1h": { days: 55, interval: "60m" },
+  "4h": { days: 120, interval: "60m", group: 4 },
+  "1d": { days: 5, interval: "5m", lastSessionOnly: true },
   "1w": { days: 7, interval: "15m" },
   "1mo": { days: 31, interval: "1d" },
   "6mo": { days: 183, interval: "1d" },
@@ -116,7 +140,7 @@ class YahooFinanceProvider implements MarketDataProvider {
 
   async getHistory(symbol: string, range: ChartRange): Promise<Candle[]> {
     return cached(`history:${symbol}:${range}`, TTL.history, async () => {
-      const { days, interval } = RANGE_CONFIG[range];
+      const { days, interval, group, lastSessionOnly } = RANGE_CONFIG[range];
       const period1 = new Date(Date.now() - days * 24 * 60 * 60 * 1000);
       const result = await yahooFinance.chart(symbol, { period1, interval });
       let candles: Candle[] = result.quotes
@@ -129,11 +153,12 @@ class YahooFinanceProvider implements MarketDataProvider {
           close: c.close!,
           volume: c.volume ?? null,
         }));
-      if (range === "1d" && candles.length > 0) {
+      if (lastSessionOnly && candles.length > 0) {
         // Keep only the most recent trading session.
         const lastDay = candles[candles.length - 1].time.slice(0, 10);
         candles = candles.filter((c) => c.time.slice(0, 10) === lastDay);
       }
+      if (group) candles = resampleCandles(candles, group);
       return candles;
     });
   }

@@ -46,7 +46,31 @@ export interface Candle {
   volume: number | null;
 }
 
-export type ChartRange = "1d" | "1w" | "1mo" | "6mo" | "1y" | "5y";
+/**
+ * Chart views. The first six are intraday interval views (candle size, with a
+ * fixed lookback window); the rest are period views with an auto interval.
+ * Note: "1m" = 1 minute, "1mo" = 1 month.
+ */
+export type ChartRange =
+  | "1m"
+  | "5m"
+  | "10m"
+  | "30m"
+  | "1h"
+  | "4h"
+  | "1d"
+  | "1w"
+  | "1mo"
+  | "6mo"
+  | "1y"
+  | "5y";
+
+export const CHART_RANGES: ChartRange[] = [
+  "1m", "5m", "10m", "30m", "1h", "4h", "1d", "1w", "1mo", "6mo", "1y", "5y",
+];
+
+/** Views whose x-axis should show clock time. */
+export const INTRADAY_RANGES: ChartRange[] = ["1m", "5m", "10m", "30m", "1h", "4h", "1d", "1w"];
 
 export interface NewsItem {
   title: string;

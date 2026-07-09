@@ -24,13 +24,22 @@ import {
   type StrategyCardData,
 } from "@/components/SignalsPanel";
 
-const RANGES: { value: ChartRange; label: string }[] = [
-  { value: "1d", label: "1D" },
-  { value: "1w", label: "1W" },
-  { value: "1mo", label: "1M" },
-  { value: "6mo", label: "6M" },
-  { value: "1y", label: "1Y" },
-  { value: "5y", label: "5Y" },
+// Intraday candle-size views (fixed lookback) followed by period views.
+const INTERVALS: { value: ChartRange; label: string; title: string }[] = [
+  { value: "1m", label: "1m", title: "1-minute candles · last session" },
+  { value: "5m", label: "5m", title: "5-minute candles · ~5 days" },
+  { value: "10m", label: "10m", title: "10-minute candles · ~10 days" },
+  { value: "30m", label: "30m", title: "30-minute candles · ~1 month" },
+  { value: "1h", label: "1H", title: "1-hour candles · ~2 months" },
+  { value: "4h", label: "4H", title: "4-hour candles · ~4 months" },
+];
+const RANGES: { value: ChartRange; label: string; title: string }[] = [
+  { value: "1d", label: "1D", title: "Last session" },
+  { value: "1w", label: "1W", title: "Last week" },
+  { value: "1mo", label: "1M", title: "Last month" },
+  { value: "6mo", label: "6M", title: "Last 6 months" },
+  { value: "1y", label: "1Y", title: "Last year" },
+  { value: "5y", label: "5Y", title: "Last 5 years" },
 ];
 
 interface SignalsResponse {
@@ -158,16 +167,35 @@ export function StockDetail({ symbol }: { symbol: string }) {
           <WatchButton symbol={symbol} name={quote?.name} />
         </div>
 
-        {/* Range tabs + AI toggle */}
+        {/* Interval + range tabs + AI toggle */}
         <div className="mt-6 flex flex-wrap items-center gap-2">
-          {RANGES.map((r) => (
+          {INTERVALS.map((r) => (
             <button
               key={r.value}
+              title={r.title}
               onClick={() => {
                 setRange(r.value);
                 setSelectedTime(null);
               }}
-              className={`rounded-full px-4 py-1.5 text-xs font-semibold transition ${
+              className={`rounded-full px-3 py-1.5 text-xs font-semibold transition ${
+                range === r.value
+                  ? "bg-accent text-white shadow-card"
+                  : "border border-line bg-card text-soft hover:border-accent hover:text-accent-deep"
+              }`}
+            >
+              {r.label}
+            </button>
+          ))}
+          <span className="mx-0.5 h-5 w-px bg-line" aria-hidden />
+          {RANGES.map((r) => (
+            <button
+              key={r.value}
+              title={r.title}
+              onClick={() => {
+                setRange(r.value);
+                setSelectedTime(null);
+              }}
+              className={`rounded-full px-3.5 py-1.5 text-xs font-semibold transition ${
                 range === r.value
                   ? "bg-ink text-white shadow-card"
                   : "border border-line bg-card text-soft hover:border-accent hover:text-accent-deep"

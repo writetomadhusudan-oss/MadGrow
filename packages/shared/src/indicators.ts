@@ -355,6 +355,39 @@ export function swings(
   return { highs, lows };
 }
 
+/**
+ * Aggregate consecutive candles into larger ones (e.g. 5m → 10m with
+ * groupSize 2, 1h → 4h with groupSize 4). Groups never span calendar days,
+ * matching how exchange sessions bound intraday bars.
+ */
+export function resampleCandles(candles: Candle[], groupSize: number): Candle[] {
+  if (groupSize <= 1) return candles;
+  const out: Candle[] = [];
+  let bucket: Candle[] = [];
+  const flush = () => {
+    if (bucket.length === 0) return;
+    out.push({
+      time: bucket[0].time,
+      open: bucket[0].open,
+      high: Math.max(...bucket.map((c) => c.high)),
+      low: Math.min(...bucket.map((c) => c.low)),
+      close: bucket[bucket.length - 1].close,
+      volume: bucket.some((c) => c.volume != null)
+        ? bucket.reduce((s, c) => s + (c.volume ?? 0), 0)
+        : null,
+    });
+    bucket = [];
+  };
+  for (const candle of candles) {
+    const day = candle.time.slice(0, 10);
+    if (bucket.length > 0 && bucket[0].time.slice(0, 10) !== day) flush();
+    bucket.push(candle);
+    if (bucket.length === groupSize) flush();
+  }
+  flush();
+  return out;
+}
+
 /** Nearest support/resistance derived from recent swing levels. */
 export function supportResistance(
   candles: Candle[],

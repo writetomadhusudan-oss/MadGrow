@@ -1,11 +1,11 @@
 import { Router } from "express";
-import type { ChartRange } from "@market-cap/shared";
+import { CHART_RANGES, type ChartRange } from "@market-cap/shared";
 import { marketData } from "../providers/marketData";
 import { news } from "../providers/news";
 
 export const stocksRouter = Router();
 
-const VALID_RANGES: ChartRange[] = ["1d", "1w", "1mo", "6mo", "1y", "5y"];
+const VALID_RANGES = CHART_RANGES;
 
 stocksRouter.get("/search", async (req, res, next) => {
   const q = String(req.query.q ?? "").trim();

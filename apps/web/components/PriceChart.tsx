@@ -9,9 +9,9 @@ import {
   type Time,
   type UTCTimestamp,
 } from "lightweight-charts";
-import type { Candle, ChartRange } from "@market-cap/shared";
+import { INTRADAY_RANGES, type Candle, type ChartRange } from "@market-cap/shared";
 
-const INTRADAY: ChartRange[] = ["1d", "1w"];
+const INTRADAY: ChartRange[] = INTRADAY_RANGES;
 
 export interface ChartMarker {
   time: string; // ISO — must exist in the candle series' day/timestamp space

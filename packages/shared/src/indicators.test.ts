@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import type { Candle } from "./types";
-import { atr, bollinger, ema, macd, rsi, sma, superTrend, vwap } from "./indicators";
+import { atr, bollinger, ema, macd, resampleCandles, rsi, sma, superTrend, vwap } from "./indicators";
 import { runStrategies } from "./strategies";
 import { blackScholesGreeks } from "./blackScholes";
 
@@ -66,6 +66,42 @@ describe("atr / bollinger / vwap / supertrend", () => {
   it("supertrend is bullish in a steady uptrend", () => {
     const { trend } = superTrend(rampCandles(60), 10, 3);
     expect(trend[59]).toBe(1);
+  });
+});
+
+describe("resampleCandles", () => {
+  const bar = (iso: string, o: number, h: number, l: number, c: number, v: number): Candle => ({
+    time: iso, open: o, high: h, low: l, close: c, volume: v,
+  });
+
+  it("merges OHLCV in groups", () => {
+    const out = resampleCandles(
+      [
+        bar("2026-07-08T04:00:00Z", 100, 105, 99, 103, 10),
+        bar("2026-07-08T04:05:00Z", 103, 110, 102, 108, 20),
+        bar("2026-07-08T04:10:00Z", 108, 109, 101, 102, 5),
+      ],
+      2
+    );
+    expect(out).toHaveLength(2);
+    expect(out[0]).toEqual(bar("2026-07-08T04:00:00Z", 100, 110, 99, 108, 30));
+    expect(out[1]).toEqual(bar("2026-07-08T04:10:00Z", 108, 109, 101, 102, 5)); // partial tail
+  });
+
+  it("never merges across day boundaries", () => {
+    const out = resampleCandles(
+      [
+        bar("2026-07-08T09:00:00Z", 1, 2, 1, 2, 1),
+        bar("2026-07-09T04:00:00Z", 3, 4, 3, 4, 1),
+      ],
+      2
+    );
+    expect(out).toHaveLength(2);
+  });
+
+  it("is identity for groupSize 1", () => {
+    const candles = [bar("2026-07-08T04:00:00Z", 1, 2, 1, 2, 1)];
+    expect(resampleCandles(candles, 1)).toBe(candles);
   });
 });
 

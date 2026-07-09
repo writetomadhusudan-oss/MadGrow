@@ -1,5 +1,6 @@
 import { Router } from "express";
 import {
+  CHART_RANGES,
   EDUCATION_DISCLAIMER,
   runStrategies,
   type ChartRange,
@@ -9,7 +10,7 @@ import { marketData } from "../providers/marketData";
 
 export const signalsRouter = Router();
 
-const RANGES: ChartRange[] = ["1d", "1w", "1mo", "6mo", "1y", "5y"];
+const RANGES = CHART_RANGES;
 
 /**
  * GET /signals/:symbol?range=6mo
