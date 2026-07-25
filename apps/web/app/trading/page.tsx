@@ -3,7 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { Coins, ShieldCheck, X } from "lucide-react";
+import { Coins, Plus, ShieldCheck, X } from "lucide-react";
 import { api } from "@/lib/api";
 import { useUser } from "@/lib/auth";
 import {
@@ -16,6 +16,7 @@ import {
 import { displaySymbol, formatNumber, formatPercent, formatSigned } from "@/lib/format";
 import { StockAvatar } from "@/components/StockAvatar";
 import { DisclaimerText } from "@/components/DisclaimerGate";
+import { NewTradeModal } from "@/components/NewTradeModal";
 
 function Card({ label, value, sub, tone }: { label: string; value: string; sub?: string; tone?: "gain" | "loss" }) {
   return (
@@ -65,6 +66,7 @@ export default function TradingPage() {
   const { data: user, isLoading: userLoading } = useUser();
   const qc = useQueryClient();
   const [editing, setEditing] = useState<string | null>(null);
+  const [newTrade, setNewTrade] = useState(false);
 
   const { data: wallet } = useQuery({
     queryKey: ["wallet"],
@@ -127,10 +129,19 @@ export default function TradingPage() {
           <h1 className="text-2xl font-bold tracking-tight">Portfolio</h1>
           <p className="text-sm text-soft">Your paper-trading holdings &amp; orders</p>
         </div>
-        <span className="flex items-center gap-1.5 rounded-full bg-accent-soft px-3 py-1.5 text-xs font-bold text-accent-deep">
-          <ShieldCheck size={14} /> Virtual MadCoins only
-        </span>
+        <div className="flex items-center gap-2">
+          <button
+            onClick={() => setNewTrade(true)}
+            className="flex items-center gap-1.5 rounded-full bg-gradient-to-r from-accent to-accent-deep px-4 py-2 text-sm font-bold text-white shadow-pop transition hover:opacity-90"
+          >
+            <Plus size={16} /> New trade
+          </button>
+          <span className="hidden items-center gap-1.5 rounded-full bg-accent-soft px-3 py-1.5 text-xs font-bold text-accent-deep sm:flex">
+            <ShieldCheck size={14} /> Virtual MadCoins only
+          </span>
+        </div>
       </div>
+      {newTrade && <NewTradeModal onClose={() => setNewTrade(false)} />}
 
       <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-6">
         <Card label="Available" value={formatMC(wallet?.available)} />
