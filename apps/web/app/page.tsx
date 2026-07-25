@@ -2,9 +2,18 @@
 
 import Link from "next/link";
 import { useQuery } from "@tanstack/react-query";
-import { ArrowRight, Flame, TrendingDown, TrendingUp } from "lucide-react";
+import {
+  ArrowRight,
+  Flame,
+  LineChart,
+  Sparkles,
+  TrendingDown,
+  TrendingUp,
+  Wallet,
+} from "lucide-react";
 import type { IndexQuote, NewsItem, Quote } from "@market-cap/shared";
 import { api } from "@/lib/api";
+import { useUser } from "@/lib/auth";
 import { formatNumber, formatPercent } from "@/lib/format";
 import { ChangeBadge } from "@/components/ChangeBadge";
 import { MoversList } from "@/components/MoversList";
@@ -25,7 +34,57 @@ function marketHeadline(indices: IndexQuote[] | undefined): string {
   return "Markets are Flat Today";
 }
 
+function WelcomeHero() {
+  return (
+    <section className="overflow-hidden rounded-card bg-gradient-to-br from-ink via-[#2c2597] to-accent p-7 text-white shadow-pop sm:p-10">
+      <p className="text-xs font-semibold uppercase tracking-widest text-white/70">
+        Educational paper trading · Virtual MadCoins only
+      </p>
+      <h1 className="mt-3 max-w-2xl text-3xl font-bold leading-tight sm:text-4xl">
+        Learn to trade the markets — with zero real-money risk.
+      </h1>
+      <p className="mt-3 max-w-xl text-sm text-white/80 sm:text-base">
+        Practice on live NSE &amp; BSE prices with a simulated wallet. Place real-style
+        orders, track profit &amp; loss, and get AI-assisted entry/exit ideas — all in
+        virtual MadCoins.
+      </p>
+      <div className="mt-6 flex flex-wrap gap-3">
+        <Link
+          href="/register"
+          className="rounded-full bg-white px-6 py-2.5 text-sm font-bold text-accent-deep shadow-card transition hover:opacity-90"
+        >
+          Create free account
+        </Link>
+        <Link
+          href="/login"
+          className="rounded-full border border-white/40 px-6 py-2.5 text-sm font-bold text-white transition hover:bg-white/10"
+        >
+          Log in
+        </Link>
+      </div>
+      <div className="mt-7 grid grid-cols-1 gap-3 sm:grid-cols-3">
+        {[
+          { icon: Wallet, title: "1,000,000 MadCoins", sub: "Free virtual balance to practice with" },
+          { icon: LineChart, title: "Real market data", sub: "Live NSE/BSE prices & charts" },
+          { icon: Sparkles, title: "AI trade ideas", sub: "Signals labelled as estimates, never advice" },
+        ].map(({ icon: Icon, title, sub }) => (
+          <div key={title} className="rounded-2xl bg-white/10 p-4 backdrop-blur">
+            <Icon size={18} className="text-white" />
+            <p className="mt-2 text-sm font-bold">{title}</p>
+            <p className="text-xs text-white/70">{sub}</p>
+          </div>
+        ))}
+      </div>
+      <p className="mt-6 text-[11px] leading-snug text-white/60">
+        For education and practice only. No real money, securities, or derivatives are
+        traded. Signals and analytics are educational estimates, not financial advice.
+      </p>
+    </section>
+  );
+}
+
 export default function Dashboard() {
+  const { data: user, isLoading: userLoading } = useUser();
   const { data: indices } = useQuery({
     queryKey: ["indices"],
     queryFn: () => api<IndexQuote[]>("/market/indices"),
@@ -44,7 +103,10 @@ export default function Dashboard() {
 
   return (
     <div className="space-y-8">
-      {/* Hero */}
+      {/* First-time visitors (signed out) get a welcome + sign-up call to action */}
+      {!userLoading && !user && <WelcomeHero />}
+
+      {/* Market snapshot */}
       <section className="rounded-card bg-card p-6 shadow-card sm:p-8">
         <p className="text-xs font-semibold uppercase tracking-widest text-accent">
           NSE · BSE · Live-ish
