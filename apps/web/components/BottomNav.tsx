@@ -2,14 +2,14 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Briefcase, CandlestickChart, Home, Star, TrendingUp } from "lucide-react";
+import { Briefcase, Home, Layers, Star, TrendingUp } from "lucide-react";
 
 const items = [
   { href: "/", label: "Home", icon: Home },
-  { href: "/trading", label: "Trading", icon: CandlestickChart },
+  { href: "/trading", label: "Portfolio", icon: Briefcase },
   { href: "/analytics", label: "Analytics", icon: TrendingUp },
+  { href: "/options", label: "Options", icon: Layers },
   { href: "/watchlist", label: "Watchlist", icon: Star },
-  { href: "/portfolio", label: "Portfolio", icon: Briefcase },
 ];
 
 export function BottomNav() {

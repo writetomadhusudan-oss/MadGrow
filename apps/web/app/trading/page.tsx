@@ -123,7 +123,10 @@ export default function TradingPage() {
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between px-1">
-        <h1 className="text-2xl font-bold tracking-tight">Paper Trading</h1>
+        <div>
+          <h1 className="text-2xl font-bold tracking-tight">Portfolio</h1>
+          <p className="text-sm text-soft">Your paper-trading holdings &amp; orders</p>
+        </div>
         <span className="flex items-center gap-1.5 rounded-full bg-accent-soft px-3 py-1.5 text-xs font-bold text-accent-deep">
           <ShieldCheck size={14} /> Virtual MadCoins only
         </span>

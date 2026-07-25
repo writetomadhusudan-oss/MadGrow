@@ -8,7 +8,7 @@ import { AlertsBell } from "./AlertsBell";
 
 const links = [
   { href: "/", label: "Home" },
-  { href: "/trading", label: "Trading" },
+  { href: "/trading", label: "Portfolio" },
   { href: "/analytics", label: "Analytics" },
   { href: "/options", label: "Options" },
   { href: "/news", label: "News" },
@@ -77,12 +77,6 @@ export function Navbar() {
 
         <div className="ml-auto flex min-w-0 flex-1 items-center justify-end gap-3 md:flex-none">
           <SearchBox />
-          <Link
-            href="/portfolio"
-            className="hidden shrink-0 rounded-full border border-line bg-card px-4 py-1.5 text-sm font-semibold shadow-card transition hover:border-accent hover:text-accent-deep sm:block"
-          >
-            Portfolio
-          </Link>
           <AlertsBell />
           <UserMenu />
         </div>
