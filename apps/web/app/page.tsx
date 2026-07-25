@@ -84,7 +84,7 @@ function WelcomeHero() {
 }
 
 export default function Dashboard() {
-  const { data: user, isLoading: userLoading } = useUser();
+  const { data: user } = useUser();
   const { data: indices } = useQuery({
     queryKey: ["indices"],
     queryFn: () => api<IndexQuote[]>("/market/indices"),
@@ -103,8 +103,10 @@ export default function Dashboard() {
 
   return (
     <div className="space-y-8">
-      {/* First-time visitors (signed out) get a welcome + sign-up call to action */}
-      {!userLoading && !user && <WelcomeHero />}
+      {/* First-time visitors (signed out) get a welcome + sign-up call to action.
+          Rendered unless we've confirmed a logged-in user, so it appears in the
+          server-rendered HTML for a fast first paint. */}
+      {!user && <WelcomeHero />}
 
       {/* Market snapshot */}
       <section className="rounded-card bg-card p-6 shadow-card sm:p-8">
