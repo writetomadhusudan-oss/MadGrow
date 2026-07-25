@@ -60,7 +60,7 @@ export function Navbar() {
           <span className="flex h-9 w-9 items-center justify-center rounded-2xl bg-gradient-to-br from-accent to-accent-deep text-white shadow-pop">
             <Sprout size={18} strokeWidth={2.5} />
           </span>
-          <span className="text-lg font-bold tracking-tight">MadGrow</span>
+          <span className="hidden text-lg font-bold tracking-tight sm:inline">MadGrow</span>
         </Link>
 
         <div className="ml-2 hidden items-center gap-1 md:flex">

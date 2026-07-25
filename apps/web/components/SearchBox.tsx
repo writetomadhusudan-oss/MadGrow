@@ -43,7 +43,7 @@ export function SearchBox() {
   };
 
   return (
-    <div ref={boxRef} className="relative w-full max-w-xs">
+    <div ref={boxRef} className="relative w-full sm:max-w-xs">
       <div className="flex items-center gap-2 rounded-full border border-line bg-card px-3.5 py-2 shadow-card focus-within:border-accent">
         <Search size={16} className="shrink-0 text-faint" />
         <input
@@ -54,12 +54,14 @@ export function SearchBox() {
           }}
           onFocus={() => setOpen(true)}
           placeholder="Search stocks…"
-          className="w-full bg-transparent text-sm outline-none placeholder:text-faint"
+          className="w-full min-w-0 bg-transparent text-base outline-none placeholder:text-faint sm:text-sm"
         />
       </div>
 
       {open && debounced.length >= 2 && (
-        <div className="absolute left-0 right-0 top-12 z-50 overflow-hidden rounded-2xl border border-line bg-card shadow-pop">
+        // Mobile: a full-width panel pinned below the navbar so results are
+        // fully readable. Desktop: a dropdown attached under the input.
+        <div className="fixed inset-x-3 top-[68px] z-50 max-h-[70vh] overflow-y-auto rounded-2xl border border-line bg-card shadow-pop sm:absolute sm:inset-x-0 sm:top-12 sm:max-h-none">
           {isFetching && !results && (
             <p className="px-4 py-3 text-sm text-soft">Searching…</p>
           )}
@@ -70,9 +72,9 @@ export function SearchBox() {
             <button
               key={r.symbol}
               onClick={() => go(r.symbol)}
-              className="flex w-full items-center gap-3 px-3.5 py-2.5 text-left transition hover:bg-accent-soft"
+              className="flex w-full items-center gap-3 border-b border-line/50 px-4 py-3 text-left transition last:border-0 hover:bg-accent-soft active:bg-accent-soft"
             >
-              <StockAvatar symbol={r.symbol} size={32} />
+              <StockAvatar symbol={r.symbol} size={34} />
               <span className="min-w-0 flex-1">
                 <span className="block truncate text-sm font-medium">{r.name}</span>
                 <span className="text-xs text-faint">
