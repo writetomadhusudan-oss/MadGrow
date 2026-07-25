@@ -24,6 +24,8 @@ export function PriceChart({
   height = 320,
   markers = [],
   onSelectTime,
+  onVisibleRangeChange,
+  windowRef,
 }: {
   candles: Candle[];
   range: ChartRange;
@@ -32,11 +34,27 @@ export function PriceChart({
   markers?: ChartMarker[];
   /** Fires with the ISO time of a clicked/tapped bar (used to explain markers). */
   onSelectTime?: (isoTime: string) => void;
+  /**
+   * Fires (continuously) with the visible window in epoch seconds — drives
+   * auto-resolution. `coverage` > 1 means the user has zoomed out wider than
+   * the loaded dataset (visible bars incl. whitespace ÷ loaded bars), the
+   * signal to coarsen resolution.
+   */
+  onVisibleRangeChange?: (fromSec: number, toSec: number, coverage: number) => void;
+  /**
+   * When set, the chart restores this window (epoch seconds) after a data
+   * swap instead of fitting all content — this is what keeps the user's
+   * zoom stable while auto-resolution replaces weekly bars with daily,
+   * hourly, or minute bars underneath them.
+   */
+  windowRef?: React.MutableRefObject<{ from: number; to: number } | null>;
 }) {
   const containerRef = useRef<HTMLDivElement>(null);
   const chartRef = useRef<IChartApi | null>(null);
   const selectRef = useRef(onSelectTime);
   selectRef.current = onSelectTime;
+  const rangeChangeRef = useRef(onVisibleRangeChange);
+  rangeChangeRef.current = onVisibleRangeChange;
 
   useEffect(() => {
     const el = containerRef.current;
@@ -58,6 +76,7 @@ export function PriceChart({
         borderVisible: false,
         timeVisible: INTRADAY.includes(range),
         secondsVisible: false,
+        minBarSpacing: 0.2, // allow deep zoom-out so auto-resolution can coarsen
       },
       crosshair: {
         horzLine: { labelBackgroundColor: "#6553f5" },
@@ -119,7 +138,30 @@ export function PriceChart({
       }
     });
 
-    chart.timeScale().fitContent();
+    const timeScale = chart.timeScale();
+    if (windowRef?.current) {
+      try {
+        timeScale.setVisibleRange({
+          from: windowRef.current.from as UTCTimestamp,
+          to: windowRef.current.to as UTCTimestamp,
+        });
+      } catch {
+        timeScale.fitContent();
+      }
+    } else {
+      timeScale.fitContent();
+    }
+    // Logical-range events keep firing even when zooming out into whitespace
+    // beyond the loaded data (time-range events clamp at the data edges).
+    timeScale.subscribeVisibleLogicalRangeChange(() => {
+      const visible = timeScale.getVisibleRange();
+      const logical = timeScale.getVisibleLogicalRange();
+      if (visible && rangeChangeRef.current) {
+        const coverage =
+          logical && candles.length > 0 ? (logical.to - logical.from) / candles.length : 1;
+        rangeChangeRef.current(visible.from as number, visible.to as number, coverage);
+      }
+    });
     const observer = new ResizeObserver(() => {
       // Only track width — refitting here would wipe the user's pan/zoom.
       chart.applyOptions({ width: el.clientWidth });

@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Sparkles } from "lucide-react";
 import type { Candle, ChartRange, NewsItem, OrderSide, Quote } from "@market-cap/shared";
@@ -50,6 +50,37 @@ interface SignalsResponse {
 const STRATEGY_PREF_KEY = "madgrow.strategies.disabled";
 const MARKERS_PREF_KEY = "madgrow.markers.enabled";
 
+type ViewMode = ChartRange | "auto";
+
+const DAY = 86_400;
+
+/**
+ * Auto-resolution ladder: pick the finest candle size that (a) suits the
+ * visible span and (b) is still available from the free data feed for the
+ * window's age (minute data only exists for recent days).
+ * weeks → days → hours → minutes as the user pinches in.
+ */
+function pickResolution(fromSec: number, toSec: number): ChartRange {
+  const span = toSec - fromSec;
+  const ageDays = (Date.now() / 1000 - fromSec) / DAY;
+  if (span <= 0.6 * DAY && ageDays <= 1.5) return "1m";
+  if (span <= 3 * DAY && ageDays <= 5) return "5m";
+  if (span <= 12 * DAY && ageDays <= 10) return "10m";
+  if (span <= 45 * DAY && ageDays <= 55) return "1h";
+  if (span <= 400 * DAY) return "1y"; // daily candles
+  return "5y"; // weekly candles
+}
+
+/** What the auto mode is currently showing, in candle-size terms. */
+const AUTO_LABEL: Partial<Record<ChartRange, string>> = {
+  "1m": "1m",
+  "5m": "5m",
+  "10m": "10m",
+  "1h": "1H",
+  "1y": "1D",
+  "5y": "1W",
+};
+
 function Stat({ label, value }: { label: string; value: string }) {
   return (
     <div className="flex items-baseline justify-between gap-2 border-b border-line py-2.5 last:border-0 sm:block sm:border-0 sm:py-0">
@@ -60,7 +91,13 @@ function Stat({ label, value }: { label: string; value: string }) {
 }
 
 export function StockDetail({ symbol }: { symbol: string }) {
-  const [range, setRange] = useState<ChartRange>("1d");
+  const [view, setView] = useState<ViewMode>("auto");
+  const [autoRange, setAutoRange] = useState<ChartRange>("1y");
+  const range: ChartRange = view === "auto" ? autoRange : view;
+  const windowRef = useRef<{ from: number; to: number } | null>(null);
+  const viewRef = useRef<ViewMode>(view);
+  viewRef.current = view;
+  const debounceRef = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
   const [ticket, setTicket] = useState<OrderSide | null>(null);
   const [showSignals, setShowSignals] = useState(false);
   const [disabledStrategies, setDisabledStrategies] = useState<Set<string>>(new Set());
@@ -76,6 +113,34 @@ export function StockDetail({ symbol }: { symbol: string }) {
       // first visit
     }
   }, []);
+
+  /** Debounced: as the user pans/zooms, swap in the right resolution. */
+  const handleVisibleRange = useCallback((fromSec: number, toSec: number, coverage: number) => {
+    windowRef.current = { from: fromSec, to: toSec };
+    if (viewRef.current !== "auto") return;
+    clearTimeout(debounceRef.current);
+    debounceRef.current = setTimeout(() => {
+      if (coverage > 1.6) {
+        // Zoomed out past the loaded dataset: widen the window (anchored to
+        // the most recent data) and step to a coarser resolution.
+        const span = (toSec - fromSec) * 4;
+        const widened = { from: toSec - span, to: toSec };
+        windowRef.current = widened;
+        const desired = pickResolution(widened.from, widened.to);
+        setAutoRange((prev) => (prev === desired ? prev : desired));
+        return;
+      }
+      const desired = pickResolution(fromSec, toSec);
+      setAutoRange((prev) => (prev === desired ? prev : desired));
+    }, 250);
+  }, []);
+
+  const selectView = (v: ViewMode) => {
+    setView(v);
+    setSelectedTime(null);
+    windowRef.current = null; // fresh view → fit content
+    if (v === "auto") setAutoRange("1y");
+  };
 
   const toggleSignals = (on: boolean) => {
     setShowSignals(on);
@@ -167,18 +232,27 @@ export function StockDetail({ symbol }: { symbol: string }) {
           <WatchButton symbol={symbol} name={quote?.name} />
         </div>
 
-        {/* Interval + range tabs + AI toggle */}
+        {/* Auto-resolution + interval + range tabs + AI toggle */}
         <div className="mt-6 flex flex-wrap items-center gap-2">
+          <button
+            title="Zoom-adaptive: weekly → daily → hourly → minute candles as you pinch in"
+            onClick={() => selectView("auto")}
+            className={`rounded-full px-3.5 py-1.5 text-xs font-bold transition ${
+              view === "auto"
+                ? "bg-gradient-to-r from-accent to-accent-deep text-white shadow-pop"
+                : "border border-line bg-card text-soft hover:border-accent hover:text-accent-deep"
+            }`}
+          >
+            Auto{view === "auto" ? ` · ${AUTO_LABEL[autoRange] ?? autoRange}` : ""}
+          </button>
+          <span className="mx-0.5 h-5 w-px bg-line" aria-hidden />
           {INTERVALS.map((r) => (
             <button
               key={r.value}
               title={r.title}
-              onClick={() => {
-                setRange(r.value);
-                setSelectedTime(null);
-              }}
+              onClick={() => selectView(r.value)}
               className={`rounded-full px-3 py-1.5 text-xs font-semibold transition ${
-                range === r.value
+                view === r.value
                   ? "bg-accent text-white shadow-card"
                   : "border border-line bg-card text-soft hover:border-accent hover:text-accent-deep"
               }`}
@@ -191,12 +265,9 @@ export function StockDetail({ symbol }: { symbol: string }) {
             <button
               key={r.value}
               title={r.title}
-              onClick={() => {
-                setRange(r.value);
-                setSelectedTime(null);
-              }}
+              onClick={() => selectView(r.value)}
               className={`rounded-full px-3.5 py-1.5 text-xs font-semibold transition ${
-                range === r.value
+                view === r.value
                   ? "bg-ink text-white shadow-card"
                   : "border border-line bg-card text-soft hover:border-accent hover:text-accent-deep"
               }`}
@@ -226,6 +297,8 @@ export function StockDetail({ symbol }: { symbol: string }) {
                 range={range}
                 markers={activeMarkers}
                 onSelectTime={setSelectedTime}
+                onVisibleRangeChange={handleVisibleRange}
+                windowRef={view === "auto" ? windowRef : undefined}
               />
             ) : (
               <p className="py-16 text-center text-sm text-soft">
