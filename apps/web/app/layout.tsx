@@ -26,9 +26,16 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           </main>
           <BottomNav />
           <DisclaimerGate />
-          <footer className="mx-auto max-w-6xl px-6 pb-24 pt-2 text-center text-xs text-faint md:pb-8">
-            Prices are delayed ~15 minutes · Data via Yahoo Finance · Educational paper trading
-            with virtual MadCoins only · <Link href="/about" className="underline">Disclaimer</Link>
+          <footer className="mx-auto max-w-6xl space-y-1.5 px-6 pb-24 pt-4 text-center text-xs text-faint md:pb-8">
+            <p>
+              Educational paper trading with virtual MadCoins only · Not investment advice ·{" "}
+              <Link href="/about" className="underline">Disclaimer</Link>
+            </p>
+            <p className="text-faint/80">
+              Market data via Yahoo Finance (unofficial, delayed ~15 min) · News via Google News.
+              For educational use only. MadGrow is an independent project and is not affiliated with,
+              endorsed by, or a data licensee of Yahoo, NSE, or BSE.
+            </p>
           </footer>
         </Providers>
       </body>
