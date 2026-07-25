@@ -17,6 +17,11 @@ const app = express();
 const PORT = Number(process.env.PORT ?? 4000);
 const WEB_ORIGIN = process.env.WEB_ORIGIN ?? "http://localhost:3000";
 
+// In production the API runs behind Nginx (TLS terminated there). Trust the
+// first proxy so secure cookies and express-rate-limit see the real client
+// protocol and IP rather than the proxy's.
+if (process.env.NODE_ENV === "production") app.set("trust proxy", 1);
+
 app.use(cors({ origin: WEB_ORIGIN, credentials: true }));
 app.use(express.json());
 app.use(cookieParser());

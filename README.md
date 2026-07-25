@@ -56,10 +56,16 @@ cards, indigo accent).
 
 ## Database
 
-SQLite via Prisma for zero-setup local dev (`apps/api/prisma/dev.db`). To move to
-PostgreSQL: change the datasource provider in
-[schema.prisma](apps/api/prisma/schema.prisma), point `DATABASE_URL` at the server,
-and run `npx prisma migrate dev`.
+PostgreSQL via Prisma. Set `DATABASE_URL` in `apps/api/.env` and create the
+tables with `npm run db:push --workspace apps/api`. For local development you
+need a Postgres instance (e.g. Postgres.app on macOS, or `apt install postgresql`
+on Linux).
+
+## Deploying
+
+See **[deploy/DEPLOY.md](deploy/DEPLOY.md)** for a complete single-VPS runbook
+(Next.js + Express + PostgreSQL behind Nginx with free HTTPS). Redeploy after
+pushing to `main` with `bash deploy/redeploy.sh` on the server.
 
 ## Running locally
 

@@ -1,8 +1,9 @@
-// SQLite for zero-setup local development. To move to PostgreSQL:
-// change provider to "postgresql", point DATABASE_URL at the server,
-// and re-run `prisma migrate dev`.
+// PostgreSQL — used in production and for local dev.
+// DATABASE_URL comes from the environment, e.g.
+//   postgresql://madgrow:PASSWORD@localhost:5432/madgrow?schema=public
+// Apply the schema to a fresh database with `npx prisma db push`.
 datasource db {
-  provider = "sqlite"
+  provider = "postgresql"
   url      = env("DATABASE_URL")
 }
 
