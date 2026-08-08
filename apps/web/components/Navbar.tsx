@@ -1,10 +1,30 @@
 "use client";
 
 import Link from "next/link";
-import { LogOut, Sprout } from "lucide-react";
+import { useQuery } from "@tanstack/react-query";
+import { LogOut, Sprout, Users } from "lucide-react";
+import { api } from "@/lib/api";
 import { useLogout, useUser } from "@/lib/auth";
 import { SearchBox } from "./SearchBox";
 import { AlertsBell } from "./AlertsBell";
+
+function UserCount() {
+  const { data } = useQuery({
+    queryKey: ["stats"],
+    queryFn: () => api<{ users: number }>("/stats"),
+    refetchInterval: 5 * 60_000,
+  });
+  if (data?.users == null) return null;
+  return (
+    <span
+      title={`${data.users.toLocaleString("en-IN")} registered users`}
+      className="flex shrink-0 items-center gap-1 rounded-full bg-accent-soft px-2 py-1 text-xs font-bold text-accent-deep"
+    >
+      <Users size={12} strokeWidth={2.5} />
+      {data.users.toLocaleString("en-IN")}
+    </span>
+  );
+}
 
 const links = [
   { href: "/", label: "Home" },
@@ -62,6 +82,7 @@ export function Navbar() {
           </span>
           <span className="hidden text-lg font-bold tracking-tight sm:inline">MadGrow</span>
         </Link>
+        <UserCount />
 
         <div className="ml-2 hidden items-center gap-1 md:flex">
           {links.map((l) => (
