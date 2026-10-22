@@ -10,6 +10,7 @@ import {
   istParts,
   latestAtr,
   minutesToHhmm,
+  openingRange,
   planExit,
   sizePosition,
   splitSessions,
@@ -152,6 +153,7 @@ dayTraderRouter.post("/plan", requireAuth, async (req: AuthedRequest, res, next)
     const sessions = splitSessions(candles);
     const latest = sessions[sessions.length - 1] ?? [];
     const orb = latest.length ? detectOrb(latest) : null;
+    const range = openingRange(latest);
     const entry = quote.price;
     const maxLoss = Math.min(parsed.data.maxLoss ?? RISK_LIMITS.maxLossPerTrade, RISK_LIMITS.maxLossPerTrade);
 
@@ -162,12 +164,17 @@ dayTraderRouter.post("/plan", requireAuth, async (req: AuthedRequest, res, next)
         stopMode,
         stopValue,
         targetR,
-        rangeLow: orb?.rangeLow,
-        rangeMid: orb?.rangeMid,
+        rangeLow: range?.rangeLow,
+        rangeMid: range?.rangeMid,
         atrValue: latestAtr(daily) ?? undefined,
       });
     } catch (e) {
-      return res.status(400).json({ error: (e as Error).message });
+      const msg = (e as Error).message;
+      return res.status(400).json({
+        error: msg.startsWith("Stop must be below")
+          ? "Price is already at or below that stop, so there is no valid long trade. Try a percent or ATR stop."
+          : msg,
+      });
     }
     const size = sizePosition({
       maxLoss,

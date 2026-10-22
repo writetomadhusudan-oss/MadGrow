@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useRef, useState } from "react";
 import Link from "next/link";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { CheckCircle2, Radar, ShieldAlert, ShieldCheck, Timer, XCircle } from "lucide-react";
@@ -101,10 +101,14 @@ export default function DayTraderPage() {
     },
   });
 
+  const planRef = useRef<HTMLElement>(null);
+  const [formError, setFormError] = useState("");
   const run = (sym: string) => {
-    setSymbol(sym);
+    setSymbol(sym.replace(/\.(NS|BO)$/, ""));
+    setFormError("");
     order.reset();
     plan.mutate(sym);
+    planRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
   };
 
   if (isLoading) return <div className="h-96 animate-pulse rounded-card bg-card/70" />;
@@ -165,8 +169,8 @@ export default function DayTraderPage() {
                     {h.time ? ` · ${istTime(h.time)}` : ""}
                   </p>
                 </div>
-                <button onClick={() => run(h.symbol)} className="shrink-0 rounded-full bg-accent-soft px-3.5 py-1.5 text-xs font-bold text-accent-deep">
-                  Build plan
+                <button onClick={() => run(h.symbol)} disabled={plan.isPending} className="shrink-0 rounded-full bg-accent-soft px-3.5 py-1.5 text-xs font-bold text-accent-deep disabled:opacity-60">
+                  {plan.isPending && plan.variables === h.symbol ? "Working…" : "Build plan"}
                 </button>
               </li>
             ))}
@@ -175,12 +179,14 @@ export default function DayTraderPage() {
         {scan.data && <p className="mt-3 text-[11px] text-faint">Scanned {scan.data.universe} stocks. Textbook patterns, not predictions.</p>}
       </section>
 
-      <section className={card}>
+      <section ref={planRef} className={`${card} scroll-mt-20`}>
         <h2 className="mb-3 text-lg font-bold">Trade plan</h2>
         <form
           onSubmit={(e) => {
             e.preventDefault();
-            if (symbol.trim()) run(symbol.trim().toUpperCase().includes(".") ? symbol.trim().toUpperCase() : `${symbol.trim().toUpperCase()}.NS`);
+            const sym = symbol.trim().toUpperCase();
+            if (!sym) return setFormError("Type a symbol (for example RELIANCE) or pick one from the scanner above.");
+            run(sym.includes(".") ? sym : `${sym}.NS`);
           }}
           className="flex flex-wrap items-end gap-2"
         >
@@ -207,6 +213,7 @@ export default function DayTraderPage() {
             {plan.isPending ? "Working…" : "Build plan"}
           </button>
         </form>
+        {formError && <p className="mt-3 text-sm text-loss">{formError}</p>}
         {plan.error && <p className="mt-3 text-sm text-loss">{(plan.error as Error).message}</p>}
 
         {p && (

@@ -76,6 +76,18 @@ export interface OrbHit {
   entry: number;
 }
 
+/** Opening range (first N bars) of a session, whether or not it has broken out. */
+export function openingRange(
+  session: Candle[],
+  bars: number = SESSION.openingRangeBars
+): { rangeHigh: number; rangeLow: number; rangeMid: number } | null {
+  if (session.length < bars) return null;
+  const r = session.slice(0, bars);
+  const rangeHigh = Math.max(...r.map((c) => c.high));
+  const rangeLow = Math.min(...r.map((c) => c.low));
+  return { rangeHigh, rangeLow, rangeMid: round2((rangeHigh + rangeLow) / 2) };
+}
+
 export interface OrbOptions {
   /** Last minute-of-day (IST) at which a new entry is allowed. Default 14:30. */
   noEntriesAfterMin?: number;
