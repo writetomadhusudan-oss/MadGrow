@@ -302,6 +302,20 @@ export interface RiskLimits {
   holidays: string[];
 }
 
+/**
+ * NSE equity-segment trading holidays for 2026 (weekday closures), compiled
+ * from broker sites citing the NSE circular. Jan 15 (Maharashtra civic
+ * elections) was a late closure that not every source lists. Verify against
+ * nseindia.com and extend via DAYTRADER_HOLIDAYS. Muhurat trading on Sun 8 Nov
+ * is not modelled: weekends are always treated as closed.
+ */
+export const NSE_HOLIDAYS_2026: readonly string[] = [
+  "2026-01-15", "2026-01-26", "2026-03-03", "2026-03-26", "2026-03-31",
+  "2026-04-03", "2026-04-14", "2026-05-01", "2026-05-28", "2026-06-26",
+  "2026-09-14", "2026-10-02", "2026-10-20", "2026-11-10", "2026-11-24",
+  "2026-12-25",
+];
+
 export const DEFAULT_RISK_LIMITS: RiskLimits = {
   maxLossPerTrade: 5_000,
   maxDailyLoss: 15_000,
@@ -310,7 +324,7 @@ export const DEFAULT_RISK_LIMITS: RiskLimits = {
   maxPositionPct: 20,
   entryFrom: "09:30",
   entryUntil: "14:30",
-  holidays: [],
+  holidays: [...NSE_HOLIDAYS_2026],
 };
 
 export interface RiskContext {

@@ -30,7 +30,7 @@ function envNum(key: string, fallback: number): number {
   return process.env[key] != null && Number.isFinite(n) ? n : fallback;
 }
 
-/** Tunable per deployment. NSE trading holidays are NOT built in: list them in DAYTRADER_HOLIDAYS. */
+/** Tunable per deployment. 2026 NSE holidays are built in; DAYTRADER_HOLIDAYS (comma-separated YYYY-MM-DD) adds more. */
 export const RISK_LIMITS: RiskLimits = {
   ...DEFAULT_RISK_LIMITS,
   maxLossPerTrade: envNum("DAYTRADER_MAX_LOSS_PER_TRADE", DEFAULT_RISK_LIMITS.maxLossPerTrade),
@@ -38,7 +38,10 @@ export const RISK_LIMITS: RiskLimits = {
   maxTradesPerDay: envNum("DAYTRADER_MAX_TRADES_PER_DAY", DEFAULT_RISK_LIMITS.maxTradesPerDay),
   minRewardRisk: envNum("DAYTRADER_MIN_REWARD_RISK", DEFAULT_RISK_LIMITS.minRewardRisk),
   maxPositionPct: envNum("DAYTRADER_MAX_POSITION_PCT", DEFAULT_RISK_LIMITS.maxPositionPct),
-  holidays: (process.env.DAYTRADER_HOLIDAYS ?? "").split(",").map((s) => s.trim()).filter(Boolean),
+  holidays: [
+    ...DEFAULT_RISK_LIMITS.holidays,
+    ...(process.env.DAYTRADER_HOLIDAYS ?? "").split(",").map((s) => s.trim()).filter(Boolean),
+  ],
 };
 
 const MIN_PRICE = 50;

@@ -26,6 +26,15 @@ describe("market clock", () => {
   });
 });
 
+describe("NSE holidays", () => {
+  it("blocks built-in 2026 holidays by default", () => {
+    // Tue 2026-10-20 (Dussehra) at 11:30 IST
+    expect(isMarketOpen(new Date("2026-10-20T06:00:00Z"), DEFAULT_RISK_LIMITS.holidays)).toBe(false);
+    expect(isMarketOpen(new Date("2026-10-21T06:00:00Z"), DEFAULT_RISK_LIMITS.holidays)).toBe(true);
+    expect(DEFAULT_RISK_LIMITS.holidays).toContain("2026-12-25");
+  });
+});
+
 describe("detectOrb", () => {
   const range = [bar(0, 100, 101, 99, 100), bar(1, 100, 102, 99.5, 101), bar(2, 101, 101.5, 99.8, 100.5)];
   it("returns the first bar that closes above the opening-range high", () => {
