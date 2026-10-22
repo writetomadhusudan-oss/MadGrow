@@ -17,6 +17,8 @@ export interface MarketDataProvider {
   getQuotes(symbols: string[]): Promise<Quote[]>;
   search(query: string): Promise<SearchResult[]>;
   getHistory(symbol: string, range: ChartRange): Promise<Candle[]>;
+  /** 5-minute candles for the last `days` calendar days (Yahoo serves ≈60). */
+  getIntraday5m(symbol: string, days: number): Promise<Candle[]>;
   getIndices(): Promise<IndexQuote[]>;
   getMovers(): Promise<{ gainers: Quote[]; losers: Quote[]; mostActive: Quote[] }>;
 }
@@ -160,6 +162,23 @@ class YahooFinanceProvider implements MarketDataProvider {
       }
       if (group) candles = resampleCandles(candles, group);
       return candles;
+    });
+  }
+
+  async getIntraday5m(symbol: string, days: number): Promise<Candle[]> {
+    return cached(`intraday5m:${symbol}:${days}`, 2 * 60_000, async () => {
+      const period1 = new Date(Date.now() - days * 24 * 60 * 60 * 1000);
+      const result = await yahooFinance.chart(symbol, { period1, interval: "5m" });
+      return result.quotes
+        .filter((c) => c.close != null)
+        .map((c) => ({
+          time: new Date(c.date).toISOString(),
+          open: c.open ?? c.close!,
+          high: c.high ?? c.close!,
+          low: c.low ?? c.close!,
+          close: c.close!,
+          volume: c.volume ?? null,
+        }));
     });
   }
 

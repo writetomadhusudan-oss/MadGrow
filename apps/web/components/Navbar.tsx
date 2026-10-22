@@ -29,6 +29,7 @@ function UserCount() {
 const links = [
   { href: "/", label: "Home" },
   { href: "/trading", label: "Portfolio" },
+  { href: "/daytrader", label: "Day Trader" },
   { href: "/analytics", label: "Analytics" },
   { href: "/options", label: "Options" },
   { href: "/news", label: "News" },

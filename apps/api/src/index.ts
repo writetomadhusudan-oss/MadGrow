@@ -12,6 +12,7 @@ import { tradingRouter } from "./routes/trading";
 import { signalsRouter } from "./routes/signals";
 import { derivativesRouter } from "./routes/derivatives";
 import { statsRouter } from "./routes/stats";
+import { dayTraderRouter } from "./routes/daytrader";
 import { startMonitor } from "./services/engine";
 
 const app = express();
@@ -46,6 +47,7 @@ app.use("/trading", tradingRouter);
 app.use("/signals", signalsRouter);
 app.use("/derivatives", derivativesRouter);
 app.use("/stats", statsRouter);
+app.use("/daytrader", dayTraderRouter);
 
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 app.use((err: Error, _req: express.Request, res: express.Response, _next: express.NextFunction) => {

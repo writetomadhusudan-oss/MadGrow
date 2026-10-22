@@ -4,3 +4,4 @@ export * from "./trading";
 export * from "./indicators";
 export * from "./strategies";
 export * from "./blackScholes";
+export * from "./dayTrader";
