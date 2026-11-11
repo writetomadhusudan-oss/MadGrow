@@ -1,0 +1,12 @@
+[
+  {
+    "relation": ["delegate_permission/common.handle_all_urls"],
+    "target": {
+      "namespace": "android_app",
+      "package_name": "cloud.madgrow.app",
+      "sha256_cert_fingerprints": [
+        "58:E0:37:8B:38:69:07:69:9F:90:BB:A7:63:27:E6:53:90:CD:57:5A:EC:76:A4:87:D7:F0:16:93:B3:9F:F0:2E"
+      ]
+    }
+  }
+]

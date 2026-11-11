@@ -70,6 +70,23 @@ authRouter.get("/me", requireAuth, async (req: AuthedRequest, res) => {
   });
 });
 
+/**
+ * Permanently delete the signed-in account and everything attached to it
+ * (wallet, orders, positions, trades, watchlist, alerts — all cascade from
+ * User). The password is re-checked so a borrowed session cannot do this.
+ */
+authRouter.delete("/me", requireAuth, async (req: AuthedRequest, res) => {
+  const password = typeof req.body?.password === "string" ? req.body.password : "";
+  const user = await prisma.user.findUnique({ where: { id: req.userId! } });
+  if (!user) return res.status(401).json({ error: "Not authenticated" });
+  if (!(await bcrypt.compare(password, user.passwordHash))) {
+    return res.status(403).json({ error: "Password is incorrect" });
+  }
+  await prisma.user.delete({ where: { id: user.id } });
+  res.clearCookie(TOKEN_COOKIE, { httpOnly: true, sameSite: "lax" });
+  res.json({ ok: true });
+});
+
 authRouter.post("/accept-disclaimer", requireAuth, async (req: AuthedRequest, res) => {
   const user = await prisma.user.update({
     where: { id: req.userId! },

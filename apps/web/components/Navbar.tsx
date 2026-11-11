@@ -56,12 +56,13 @@ function UserMenu() {
   const initial = (user.name ?? user.email)[0]?.toUpperCase() ?? "?";
   return (
     <div className="flex shrink-0 items-center gap-2">
-      <span
-        title={user.email}
-        className="flex h-9 w-9 items-center justify-center rounded-full bg-accent-soft text-sm font-bold text-accent-deep"
+      <Link
+        href="/account"
+        title={`${user.email} — account`}
+        className="flex h-9 w-9 items-center justify-center rounded-full bg-accent-soft text-sm font-bold text-accent-deep transition hover:ring-2 hover:ring-accent"
       >
         {initial}
-      </span>
+      </Link>
       <button
         onClick={() => logout.mutate()}
         title="Log out"
