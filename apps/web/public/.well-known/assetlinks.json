@@ -5,7 +5,8 @@
       "namespace": "android_app",
       "package_name": "cloud.madgrow.app",
       "sha256_cert_fingerprints": [
-        "58:E0:37:8B:38:69:07:69:9F:90:BB:A7:63:27:E6:53:90:CD:57:5A:EC:76:A4:87:D7:F0:16:93:B3:9F:F0:2E"
+        "58:E0:37:8B:38:69:07:69:9F:90:BB:A7:63:27:E6:53:90:CD:57:5A:EC:76:A4:87:D7:F0:16:93:B3:9F:F0:2E",
+        "46:A2:65:4B:A7:8D:AE:6C:CB:75:2B:CA:9C:4D:66:71:27:86:DE:A8:03:21:BB:BE:59:81:C0:A7:E5:78:7B:C2"
       ]
     }
   }
