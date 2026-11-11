@@ -1,0 +1,11 @@
+# Build outputs — regenerate with `bubblewrap build`
+*.apk
+*.aab
+*.idsig
+.gradle/
+build/
+app/build/
+local.properties
+# The signing key lives in ~/.madgrow-keys and must never be committed.
+*.jks
+*.keystore
